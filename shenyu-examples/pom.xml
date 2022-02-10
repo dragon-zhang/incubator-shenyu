@@ -44,6 +44,7 @@
         <module>shenyu-examples-https</module>
         <module>shenyu-examples-dubbo</module>
         <module>shenyu-examples-springcloud</module>
+        <module>shenyu-examples-spring4x</module>
         <module>shenyu-examples-eureka</module>
         <module>shenyu-examples-sofa</module>
         <module>shenyu-examples-tars</module>
