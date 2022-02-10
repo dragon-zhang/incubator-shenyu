@@ -28,8 +28,8 @@ import org.apache.shenyu.register.common.dto.MetaDataRegisterDTO;
 import org.apache.shenyu.register.common.dto.URIRegisterDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.web.context.WebServerInitializedEvent;
 import org.springframework.context.ApplicationListener;
-import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.env.Environment;
 import org.springframework.lang.NonNull;
 
@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * The type Context register listener.
  */
-public class ContextRegisterListener implements ApplicationListener<ContextRefreshedEvent> {
+public class ContextRegisterListener implements ApplicationListener<WebServerInitializedEvent> {
     
     private static final Logger LOG = LoggerFactory.getLogger(ContextRegisterListener.class);
     
@@ -54,9 +54,7 @@ public class ContextRegisterListener implements ApplicationListener<ContextRefre
     private final String contextPath;
     
     private final String appName;
-    
-    private final Integer port;
-    
+
     /**
      * Instantiates a new Context register listener.
      *
@@ -74,31 +72,31 @@ public class ContextRegisterListener implements ApplicationListener<ContextRefre
                 throw new ShenyuClientIllegalArgumentException(errorMsg);
             }
         }
-        port = Integer.parseInt(props.getProperty(ShenyuClientConstants.PORT));
         this.appName = env.getProperty("spring.application.name");
         this.host = props.getProperty(ShenyuClientConstants.HOST);
     }
     
     @Override
-    public void onApplicationEvent(@NonNull final ContextRefreshedEvent contextRefreshedEvent) {
+    public void onApplicationEvent(@NonNull final WebServerInitializedEvent webServerInitializedEvent) {
         if (!registered.compareAndSet(false, true)) {
             return;
         }
         if (Boolean.TRUE.equals(isFull)) {
             publisher.publishEvent(buildMetaDataDTO());
         }
-        publisher.publishEvent(buildUriRegisterDTO());
+        publisher.publishEvent(buildUriRegisterDTO(webServerInitializedEvent));
     }
-    
-    private URIRegisterDTO buildUriRegisterDTO() {
+
+    private URIRegisterDTO buildUriRegisterDTO(WebServerInitializedEvent webServerInitializedEvent) {
         return URIRegisterDTO.builder()
                 .contextPath(this.contextPath)
                 .appName(appName)
                 .host(IpUtils.isCompleteHost(this.host) ? this.host : IpUtils.getHost(this.host))
-                .port(port)
+                //Note: In this way, no matter what container is used,
+                //you can get the port that is actually started in the end.
+                .port(webServerInitializedEvent.getWebServer().getPort())
                 .rpcType(RpcTypeEnum.SPRING_CLOUD.getName())
                 .build();
-        
     }
     
     private MetaDataRegisterDTO buildMetaDataDTO() {
