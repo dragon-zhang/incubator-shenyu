@@ -22,23 +22,30 @@ import org.apache.shenyu.client.core.constant.ShenyuClientConstants;
 import org.apache.shenyu.client.core.disruptor.ShenyuClientRegisterEventPublisher;
 import org.apache.shenyu.client.core.exception.ShenyuClientIllegalArgumentException;
 import org.apache.shenyu.common.enums.RpcTypeEnum;
+import org.apache.shenyu.common.exception.ShenyuException;
 import org.apache.shenyu.common.utils.IpUtils;
+import org.apache.shenyu.common.utils.PortUtils;
 import org.apache.shenyu.register.common.config.PropertiesConfig;
 import org.apache.shenyu.register.common.dto.MetaDataRegisterDTO;
 import org.apache.shenyu.register.common.dto.URIRegisterDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.lang.NonNull;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The type Context register listener.
  */
-public class ContextRegisterListener implements ApplicationListener<ContextRefreshedEvent> {
+public class ContextRegisterListener implements ApplicationListener<ContextRefreshedEvent>, BeanFactoryAware {
 
     private static final Logger LOG = LoggerFactory.getLogger(ContextRegisterListener.class);
 
@@ -57,6 +64,8 @@ public class ContextRegisterListener implements ApplicationListener<ContextRefre
     private final Integer port;
 
     private final Boolean isFull;
+
+    private BeanFactory beanFactory;
 
     /**
      * Instantiates a new Context register listener.
@@ -81,6 +90,11 @@ public class ContextRegisterListener implements ApplicationListener<ContextRefre
     }
 
     @Override
+    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+        this.beanFactory = beanFactory;
+    }
+
+    @Override
     public void onApplicationEvent(@NonNull final ContextRefreshedEvent contextRefreshedEvent) {
         if (!registered.compareAndSet(false, true)) {
             return;
@@ -88,10 +102,47 @@ public class ContextRegisterListener implements ApplicationListener<ContextRefre
         if (Boolean.TRUE.equals(isFull)) {
             publisher.publishEvent(buildMetaDataDTO());
         }
-        publisher.publishEvent(buildURIRegisterDTO());
+        final int mergedPort = port <= 0 ? findPort() : port;
+        publisher.publishEvent(buildURIRegisterDTO(mergedPort));
     }
 
-    private URIRegisterDTO buildURIRegisterDTO() {
+    /**
+     * fixme When there are many instances of external tomcat, there may be a problem
+     * Note: springboot 1.x version has been made compatible.
+     * Note: In this way, no matter what container is actually used,
+     * you can get the port that is actually started in the end.
+     *
+     * @see org.springframework.boot.context.embedded.AbstractConfigurableEmbeddedServletContainer#getPort()
+     * @see org.springframework.boot.web.server.AbstractConfigurableWebServerFactory#getPort()
+     */
+    @SuppressWarnings("all")
+    private int findPort() {
+        try {
+            //works fine for springboot 2.x
+            return getPort("org.springframework.boot.web.server.AbstractConfigurableWebServerFactory");
+        } catch (Exception e) {
+            try {
+                //works fine for springboot 1.x
+                return getPort("org.springframework.boot.context.embedded.AbstractConfigurableEmbeddedServletContainer");
+            } catch (Exception f) {
+                try {
+                    //for external tomcat
+                    return PortUtils.getPort();
+                } catch (Exception g) {
+                    throw new ShenyuException("can not find port automatically ! try to config ${shenyu.client.http.props.port}");
+                }
+            }
+        }
+    }
+
+    private int getPort(final String className) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        final Class<?> clazz = Class.forName(className);
+        final Method method = clazz.getMethod("getPort");
+        final Object bean = beanFactory.getBean(clazz);
+        return (int) method.invoke(bean);
+    }
+
+    private URIRegisterDTO buildURIRegisterDTO(final int port) {
         return URIRegisterDTO.builder()
             .contextPath(this.contextPath)
             .appName(appName)
