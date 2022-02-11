@@ -39,6 +39,7 @@ import org.springframework.lang.NonNull;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -83,7 +84,7 @@ public class ContextRegisterListener implements ApplicationListener<ContextRefre
                 throw new ShenyuClientIllegalArgumentException(errorMsg);
             }
         }
-        this.port = Integer.parseInt(props.getProperty(ShenyuClientConstants.PORT));
+        this.port = Integer.parseInt(Optional.ofNullable(props.getProperty(ShenyuClientConstants.PORT)).orElseGet(() -> "-1"));
         this.appName = props.getProperty(ShenyuClientConstants.APP_NAME);
         this.protocol = props.getProperty(ShenyuClientConstants.PROTOCOL, ShenyuClientConstants.HTTP);
         this.host = props.getProperty(ShenyuClientConstants.HOST);
@@ -120,18 +121,18 @@ public class ContextRegisterListener implements ApplicationListener<ContextRefre
         try {
             //works fine for springboot 2.x
             return getPort("org.springframework.boot.web.server.AbstractConfigurableWebServerFactory");
+        } catch (Exception ignored) {
+        }
+        try {
+            //works fine for springboot 1.x
+            return getPort("org.springframework.boot.context.embedded.AbstractConfigurableEmbeddedServletContainer");
+        } catch (Exception ignored) {
+        }
+        try {
+            //for external tomcat
+            return PortUtils.getPort();
         } catch (Exception e) {
-            try {
-                //works fine for springboot 1.x
-                return getPort("org.springframework.boot.context.embedded.AbstractConfigurableEmbeddedServletContainer");
-            } catch (Exception f) {
-                try {
-                    //for external tomcat
-                    return PortUtils.getPort();
-                } catch (Exception g) {
-                    throw new ShenyuException("can not find port automatically ! try to config ${shenyu.client.http.props.port}");
-                }
-            }
+            throw new ShenyuException("can not find port automatically ! try to config ${shenyu.client.http.props.port}");
         }
     }
 
