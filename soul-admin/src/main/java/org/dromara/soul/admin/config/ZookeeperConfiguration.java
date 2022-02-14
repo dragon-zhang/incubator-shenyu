@@ -19,9 +19,13 @@
 package org.dromara.soul.admin.config;
 
 import org.I0Itec.zkclient.ZkClient;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.I0Itec.zkclient.exception.ZkMarshallingError;
+import org.I0Itec.zkclient.serialize.ZkSerializer;
+import org.dromara.soul.common.utils.GsonUtils;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+
+import java.nio.charset.StandardCharsets;
 
 /**
  * ZookeeperConfiguration .
@@ -38,8 +42,29 @@ public class ZookeeperConfiguration {
      * @return ZkClient {@linkplain ZkClient}
      */
     @Bean
-    @ConditionalOnMissingBean(ZkClient.class)
     public ZkClient zkClient(final ZookeeperProperties zookeeperProp) {
         return new ZkClient(zookeeperProp.getUrl(), zookeeperProp.getSessionTimeout(), zookeeperProp.getConnectionTimeout());
+    }
+
+    /**
+     * register zkClient in spring ioc.
+     *
+     * @param zookeeperProp the zookeeper configuration
+     * @return ZkClient {@linkplain org.I0Itec.zkclient.ZkClient}
+     */
+    @Bean
+    public ZkClient shenyuZkClient(final ZookeeperProperties zookeeperProp) {
+        return new ZkClient(zookeeperProp.getUrl(), zookeeperProp.getSessionTimeout(),
+                zookeeperProp.getConnectionTimeout(), new ZkSerializer() {
+            @Override
+            public byte[] serialize(Object data) throws ZkMarshallingError {
+                return GsonUtils.getInstance().toJson(data).getBytes(StandardCharsets.UTF_8);
+            }
+
+            @Override
+            public Object deserialize(byte[] bytes) throws ZkMarshallingError {
+                return new String(bytes, StandardCharsets.UTF_8);
+            }
+        });
     }
 }

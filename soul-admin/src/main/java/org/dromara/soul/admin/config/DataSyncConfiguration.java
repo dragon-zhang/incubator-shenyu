@@ -59,8 +59,9 @@ public class DataSyncConfiguration {
          */
         @Bean
         @ConditionalOnMissingBean(ZookeeperDataChangedListener.class)
-        public DataChangedListener zookeeperDataChangedListener(final ZkClient zkClient) {
-            return new ZookeeperDataChangedListener(zkClient);
+        public DataChangedListener zookeeperDataChangedListener(final ZkClient zkClient,
+                                                                final ZkClient shenyuZkClient) {
+            return new ZookeeperDataChangedListener(zkClient, shenyuZkClient);
         }
     
         /**

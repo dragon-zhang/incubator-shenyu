@@ -12,7 +12,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/soul?useUnicode=true&characterEncoding=utf-8
     username: root
-    password:
+    password: zhangzicheng
     driver-class-name: com.mysql.jdbc.Driver
 
 mybatis:
@@ -22,12 +22,12 @@ mybatis:
 
 soul:
   sync:
-    websocket:
-        enabled : true
-#    zookeeper:
-#        url: localhost:2181
-#        sessionTimeout: 5000
-#        connectionTimeout: 2000
+#    websocket:
+#        enabled : true
+    zookeeper:
+      url: localhost:2181
+      sessionTimeout: 5000
+      connectionTimeout: 2000
 #    http:
 #      enabled: true
 #    nacos:

@@ -1,7 +1,8 @@
 server:
   port: 8187
   address: 0.0.0.0
-
+  servlet:
+    context-path: /http
 
 soul:
   http:

@@ -19,9 +19,11 @@ package org.dromara.soul.admin.listener.zookeeper;
 
 import java.net.URLEncoder;
 import java.util.List;
+
 import lombok.SneakyThrows;
 import org.I0Itec.zkclient.ZkClient;
 import org.dromara.soul.admin.listener.DataChangedListener;
+import org.dromara.soul.common.constant.ShenyuZkPathConstants;
 import org.dromara.soul.common.constant.ZkPathConstants;
 import org.dromara.soul.common.dto.AppAuthData;
 import org.dromara.soul.common.dto.MetaData;
@@ -40,8 +42,12 @@ public class ZookeeperDataChangedListener implements DataChangedListener {
 
     private final ZkClient zkClient;
 
-    public ZookeeperDataChangedListener(final ZkClient zkClient) {
+    private final ZkClient shenyuZkClient;
+
+    public ZookeeperDataChangedListener(final ZkClient zkClient,
+                                        final ZkClient shenyuZkClient) {
         this.zkClient = zkClient;
+        this.shenyuZkClient = shenyuZkClient;
     }
 
     @Override
@@ -53,6 +59,11 @@ public class ZookeeperDataChangedListener implements DataChangedListener {
                 if (zkClient.exists(pluginPath)) {
                     zkClient.delete(pluginPath);
                 }
+                //shenyu
+                pluginPath = ShenyuZkPathConstants.buildAppAuthPath(data.getAppKey());
+                if (shenyuZkClient.exists(pluginPath)) {
+                    shenyuZkClient.delete(pluginPath);
+                }
                 continue;
             }
 
@@ -62,6 +73,12 @@ public class ZookeeperDataChangedListener implements DataChangedListener {
                 zkClient.createPersistent(appAuthPath, true);
             }
             zkClient.writeData(appAuthPath, data);
+            //shenyu
+            appAuthPath = ShenyuZkPathConstants.buildAppAuthPath(data.getAppKey());
+            if (!shenyuZkClient.exists(appAuthPath)) {
+                shenyuZkClient.createPersistent(appAuthPath, true);
+            }
+            shenyuZkClient.writeData(appAuthPath, data);
         }
     }
 
@@ -75,6 +92,11 @@ public class ZookeeperDataChangedListener implements DataChangedListener {
                 if (zkClient.exists(path)) {
                     zkClient.delete(path);
                 }
+                //shenyu
+                path = ShenyuZkPathConstants.buildMetaDataPath(URLEncoder.encode(data.getPath(), "UTF-8"));
+                if (shenyuZkClient.exists(path)) {
+                    shenyuZkClient.delete(path);
+                }
                 continue;
             }
             // create or update
@@ -83,6 +105,12 @@ public class ZookeeperDataChangedListener implements DataChangedListener {
                 zkClient.createPersistent(metaDataPath, true);
             }
             zkClient.writeData(metaDataPath, data);
+            //shenyu
+            metaDataPath = ShenyuZkPathConstants.buildMetaDataPath(URLEncoder.encode(data.getPath(), "UTF-8"));
+            if (!shenyuZkClient.exists(metaDataPath)) {
+                shenyuZkClient.createPersistent(metaDataPath, true);
+            }
+            shenyuZkClient.writeData(metaDataPath, data);
         }
     }
 
@@ -103,6 +131,19 @@ public class ZookeeperDataChangedListener implements DataChangedListener {
                 if (zkClient.exists(ruleParentPath)) {
                     zkClient.deleteRecursive(ruleParentPath);
                 }
+                //shenyu
+                pluginPath = ShenyuZkPathConstants.buildPluginPath(data.getName());
+                if (shenyuZkClient.exists(pluginPath)) {
+                    shenyuZkClient.deleteRecursive(pluginPath);
+                }
+                selectorParentPath = ShenyuZkPathConstants.buildSelectorParentPath(data.getName());
+                if (shenyuZkClient.exists(selectorParentPath)) {
+                    shenyuZkClient.deleteRecursive(selectorParentPath);
+                }
+                ruleParentPath = ShenyuZkPathConstants.buildRuleParentPath(data.getName());
+                if (shenyuZkClient.exists(ruleParentPath)) {
+                    shenyuZkClient.deleteRecursive(ruleParentPath);
+                }
                 continue;
             }
 
@@ -112,6 +153,12 @@ public class ZookeeperDataChangedListener implements DataChangedListener {
                 zkClient.createPersistent(pluginPath, true);
             }
             zkClient.writeData(pluginPath, data);
+            //shenyu
+            pluginPath = ShenyuZkPathConstants.buildPluginPath(data.getName());
+            if (!shenyuZkClient.exists(pluginPath)) {
+                shenyuZkClient.createPersistent(pluginPath, true);
+            }
+            shenyuZkClient.writeData(pluginPath, data);
         }
     }
 
@@ -122,6 +169,11 @@ public class ZookeeperDataChangedListener implements DataChangedListener {
             if (zkClient.exists(selectorParentPath)) {
                 zkClient.deleteRecursive(selectorParentPath);
             }
+            //shenyu
+            selectorParentPath = ShenyuZkPathConstants.buildSelectorParentPath(changed.get(0).getPluginName());
+            if (shenyuZkClient.exists(selectorParentPath)) {
+                shenyuZkClient.deleteRecursive(selectorParentPath);
+            }
         }
         for (SelectorData data : changed) {
             if (eventType == DataEventTypeEnum.DELETE) {
@@ -131,7 +183,7 @@ public class ZookeeperDataChangedListener implements DataChangedListener {
             createSelector(data);
         }
     }
-    
+
     @Override
     public void onRuleChanged(final List<RuleData> changed, final DataEventTypeEnum eventType) {
         if (eventType == DataEventTypeEnum.REFRESH) {
@@ -139,12 +191,22 @@ public class ZookeeperDataChangedListener implements DataChangedListener {
             if (zkClient.exists(selectorParentPath)) {
                 zkClient.deleteRecursive(selectorParentPath);
             }
+            //shenyu
+            selectorParentPath = ShenyuZkPathConstants.buildRuleParentPath(changed.get(0).getPluginName());
+            if (shenyuZkClient.exists(selectorParentPath)) {
+                shenyuZkClient.deleteRecursive(selectorParentPath);
+            }
         }
         for (RuleData data : changed) {
             if (eventType == DataEventTypeEnum.DELETE) {
-                final String rulePath = ZkPathConstants.buildRulePath(data.getPluginName(), data.getSelectorId(), data.getId());
+                String rulePath = ZkPathConstants.buildRulePath(data.getPluginName(), data.getSelectorId(), data.getId());
                 if (zkClient.exists(rulePath)) {
                     zkClient.delete(rulePath);
+                }
+                //shenyu
+                rulePath = ShenyuZkPathConstants.buildRulePath(data.getPluginName(), data.getSelectorId(), data.getId());
+                if (shenyuZkClient.exists(rulePath)) {
+                    shenyuZkClient.delete(rulePath);
                 }
                 continue;
             }
@@ -157,16 +219,31 @@ public class ZookeeperDataChangedListener implements DataChangedListener {
                 zkClient.createPersistent(ruleRealPath, true);
             }
             zkClient.writeData(ruleRealPath, data);
+            //shenyu
+            ruleParentPath = ShenyuZkPathConstants.buildRuleParentPath(data.getPluginName());
+            if (!shenyuZkClient.exists(ruleParentPath)) {
+                shenyuZkClient.createPersistent(ruleParentPath, true);
+            }
+            ruleRealPath = ShenyuZkPathConstants.buildRulePath(data.getPluginName(), data.getSelectorId(), data.getId());
+            if (!shenyuZkClient.exists(ruleRealPath)) {
+                shenyuZkClient.createPersistent(ruleRealPath, true);
+            }
+            shenyuZkClient.writeData(ruleRealPath, data);
         }
     }
-    
+
     private void deleteSelector(final SelectorData data) {
         String selectorRealPath = ZkPathConstants.buildSelectorRealPath(data.getPluginName(), data.getId());
         if (zkClient.exists(selectorRealPath)) {
             zkClient.delete(selectorRealPath);
         }
+        //shenyu
+        selectorRealPath = ShenyuZkPathConstants.buildSelectorRealPath(data.getPluginName(), data.getId());
+        if (shenyuZkClient.exists(selectorRealPath)) {
+            shenyuZkClient.delete(selectorRealPath);
+        }
     }
-    
+
     private void createSelector(final SelectorData data) {
         String selectorParentPath = ZkPathConstants.buildSelectorParentPath(data.getPluginName());
         if (!zkClient.exists(selectorParentPath)) {
@@ -177,6 +254,16 @@ public class ZookeeperDataChangedListener implements DataChangedListener {
             zkClient.createPersistent(selectorRealPath, true);
         }
         zkClient.writeData(selectorRealPath, data);
+        //shenyu
+        selectorParentPath = ShenyuZkPathConstants.buildSelectorParentPath(data.getPluginName());
+        if (!shenyuZkClient.exists(selectorParentPath)) {
+            shenyuZkClient.createPersistent(selectorParentPath, true);
+        }
+        selectorRealPath = ShenyuZkPathConstants.buildSelectorRealPath(data.getPluginName(), data.getId());
+        if (!shenyuZkClient.exists(selectorRealPath)) {
+            shenyuZkClient.createPersistent(selectorRealPath, true);
+        }
+        shenyuZkClient.writeData(selectorRealPath, data);
     }
-    
+
 }
