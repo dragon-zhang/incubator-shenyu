@@ -61,22 +61,22 @@
         <!--if you use http proxy end this-->
 
         <!--soul springCloud plugin start-->
-<!--       <dependency>-->
-<!--            <groupId>org.dromara</groupId>-->
-<!--            <artifactId>soul-spring-boot-starter-plugin-springcloud</artifactId>-->
-<!--            <version>${project.version}</version>-->
-<!--        </dependency>-->
+       <dependency>
+            <groupId>org.dromara</groupId>
+            <artifactId>soul-spring-boot-starter-plugin-springcloud</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.cloud</groupId>-->
-<!--            <artifactId>spring-cloud-commons</artifactId>-->
-<!--            <version>2.2.0.RELEASE</version>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.cloud</groupId>-->
-<!--            <artifactId>spring-cloud-starter-netflix-ribbon</artifactId>-->
-<!--            <version>2.2.0.RELEASE</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-commons</artifactId>
+            <version>2.2.0.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-ribbon</artifactId>
+            <version>2.2.0.RELEASE</version>
+        </dependency>
 
 <!--        &lt;!&ndash;soul springCloud plugin start end&ndash;&gt;-->
 
@@ -95,16 +95,16 @@
 <!--        </dependency>-->
 
         <!--soul  apache dubbo plugin start-->
-        <!-- <dependency>
-            <groupId>org.dromara</groupId>
-            <artifactId>soul-spring-boot-starter-plugin-apache-dubbo</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.dubbo</groupId>
-            <artifactId>dubbo</artifactId>
-            <version>2.7.5</version>
-        </dependency>-->
+<!--         <dependency>-->
+<!--            <groupId>org.dromara</groupId>-->
+<!--            <artifactId>soul-spring-boot-starter-plugin-apache-dubbo</artifactId>-->
+<!--            <version>${project.version}</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.apache.dubbo</groupId>-->
+<!--            <artifactId>dubbo</artifactId>-->
+<!--            <version>2.7.5</version>-->
+<!--        </dependency>-->
         <!-- Dubbo Nacos registry dependency -->
       <!--  <dependency>
             <groupId>org.apache.dubbo</groupId>
