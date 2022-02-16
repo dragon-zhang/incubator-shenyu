@@ -34,7 +34,12 @@ public enum PluginEnum {
      * Global plugin enum.
      */
     GLOBAL(10, 0, "global"),
-    
+
+    /**
+     * Isolate plugin enum.
+     */
+    ISOLATE(11, 0, "isolate"),
+
     /**
      * Sign plugin enum.
      */

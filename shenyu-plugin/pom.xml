@@ -60,5 +60,6 @@
         <module>shenyu-plugin-uri</module>
         <module>shenyu-plugin-general-context</module>
         <module>shenyu-plugin-mqtt</module>
+        <module>shenyu-plugin-isolate</module>
     </modules>
 </project>
