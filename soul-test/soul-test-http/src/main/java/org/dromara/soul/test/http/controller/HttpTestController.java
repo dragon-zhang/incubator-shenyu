@@ -29,6 +29,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 /**
  * TestController.
  *
@@ -38,7 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/test")
 @SoulSpringMvcClient(path = "/test/**")
 public class HttpTestController {
-    
+
     /**
      * Post user dto.
      *
@@ -47,9 +49,14 @@ public class HttpTestController {
      */
     @PostMapping("/payment")
     public UserDTO post(@RequestBody final UserDTO userDTO) {
+        try {
+            Thread.sleep(ThreadLocalRandom.current().nextInt(1000));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         return userDTO;
     }
-    
+
     /**
      * Find by user id string.
      *
@@ -63,7 +70,7 @@ public class HttpTestController {
         userDTO.setUserName("hello world");
         return userDTO;
     }
-    
+
     /**
      * Gets path variable.
      *
@@ -78,8 +85,8 @@ public class HttpTestController {
         userDTO.setUserName("hello world");
         return userDTO;
     }
-    
-    
+
+
     /**
      * Test rest ful string.
      *
@@ -93,8 +100,8 @@ public class HttpTestController {
         userDTO.setUserName("hello world");
         return userDTO;
     }
-    
-    
+
+
     /**
      * Put path variable and body string.
      *
@@ -108,5 +115,5 @@ public class HttpTestController {
         userDTO.setUserName("hello world");
         return userDTO;
     }
-    
+
 }
