@@ -20,6 +20,8 @@ package org.apache.shenyu.plugin.httpclient;
 import io.netty.channel.ConnectTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutException;
 import org.apache.shenyu.common.constant.Constants;
+import org.apache.shenyu.common.enums.PluginEnum;
+import org.apache.shenyu.common.enums.RetryEnum;
 import org.apache.shenyu.plugin.api.ShenyuPlugin;
 import org.apache.shenyu.plugin.api.ShenyuPluginChain;
 import org.apache.shenyu.plugin.api.context.ShenyuContext;
@@ -64,16 +66,20 @@ public abstract class AbstractHttpClientPlugin implements ShenyuPlugin {
         final long timeout = (long) Optional.ofNullable(exchange.getAttribute(Constants.HTTP_TIME_OUT)).orElse(3000L);
         final Duration duration = Duration.ofMillis(timeout);
         final int retryTimes = (int) Optional.ofNullable(exchange.getAttribute(Constants.HTTP_RETRY)).orElse(0);
+        final String retryStrategy = (String) Optional.ofNullable(exchange.getAttribute(Constants.RETRY_STRATEGY)).orElseGet(RetryEnum.CURRENT::getName);
         LOG.info("The request urlPath is {}, retryTimes is {}", uri.toASCIIString(), retryTimes);
         final HttpHeaders httpHeaders = buildHttpHeaders(exchange);
-        final Mono<?> response = doRequest(exchange, exchange.getRequest().getMethodValue(), uri, httpHeaders, exchange.getRequest().getBody())
+        Mono<?> response = doRequest(exchange, exchange.getRequest().getMethodValue(), uri, httpHeaders, exchange.getRequest().getBody())
                 .timeout(duration, Mono.error(new TimeoutException("Response took longer than timeout: " + duration)))
-                .retryWhen(Retry.anyOf(TimeoutException.class, ConnectTimeoutException.class, ReadTimeoutException.class, IllegalStateException.class)
-                        .retryMax(retryTimes)
-                        .backoff(Backoff.exponential(Duration.ofMillis(200), Duration.ofSeconds(20), 2, true)))
                 .doOnError(e -> LOG.error(e.getMessage(), e))
                 .onErrorMap(TimeoutException.class, th -> new ResponseStatusException(HttpStatus.GATEWAY_TIMEOUT, th.getMessage(), th));
-        return response.flatMap((Function<Object, Mono<? extends Void>>) o -> chain.execute(exchange));
+        if (RetryEnum.CURRENT.getName().equals(retryStrategy)) {
+            response = response.retryWhen(Retry.anyOf(TimeoutException.class, ConnectTimeoutException.class, ReadTimeoutException.class, IllegalStateException.class)
+                    .retryMax(retryTimes)
+                    .backoff(Backoff.exponential(Duration.ofMillis(200), Duration.ofSeconds(20), 2, true)));
+            return response.flatMap((Function<Object, Mono<? extends Void>>) o -> chain.execute(exchange));
+        }
+        return response.flatMap((Function<Object, Mono<? extends Void>>) o -> chain.executeFrom(exchange, PluginEnum.REWRITE));
     }
 
     /**

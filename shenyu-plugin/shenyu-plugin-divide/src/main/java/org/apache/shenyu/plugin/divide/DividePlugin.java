@@ -17,6 +17,7 @@
 
 package org.apache.shenyu.plugin.divide;
 
+import com.google.common.collect.Sets;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shenyu.common.constant.Constants;
@@ -44,6 +45,9 @@ import reactor.core.publisher.Mono;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Divide Plugin.
@@ -73,7 +77,10 @@ public class DividePlugin extends AbstractShenyuPlugin {
             Object error = ShenyuResultWrap.error(exchange, ShenyuResultEnum.REQUEST_ENTITY_TOO_LARGE, null);
             return WebFluxResultUtils.result(exchange, error);
         }
-        List<Upstream> upstreamList = UpstreamCacheManager.getInstance().findUpstreamListBySelectorId(selector.getId());
+        @SuppressWarnings("all")
+        Set<Upstream> exclude = (Set<Upstream>) Optional.ofNullable(exchange.getAttributes().get(Constants.UPSTREAM_EXCLUDE)).orElseGet(() -> Sets.newHashSet());
+        List<Upstream> upstreamList = UpstreamCacheManager.getInstance().findUpstreamListBySelectorId(selector.getId())
+                .stream().filter(exclude::contains).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(upstreamList)) {
             LOG.error("divide upstream configuration error： {}", rule);
             Object error = ShenyuResultWrap.error(exchange, ShenyuResultEnum.CANNOT_FIND_HEALTHY_UPSTREAM_URL, null);
@@ -86,12 +93,18 @@ public class DividePlugin extends AbstractShenyuPlugin {
             Object error = ShenyuResultWrap.error(exchange, ShenyuResultEnum.CANNOT_FIND_HEALTHY_UPSTREAM_URL, null);
             return WebFluxResultUtils.result(exchange, error);
         }
+        // in order not to affect the next retry call,
+        // this upstream needs to be excluded
+        exclude.add(upstream);
         // set the http url
         String domain = buildDomain(upstream);
         exchange.getAttributes().put(Constants.HTTP_DOMAIN, domain);
         // set the http timeout
         exchange.getAttributes().put(Constants.HTTP_TIME_OUT, ruleHandle.getTimeout());
         exchange.getAttributes().put(Constants.HTTP_RETRY, ruleHandle.getRetry());
+        // set retry strategy
+        exchange.getAttributes().put(Constants.RETRY_STRATEGY, ruleHandle.getRetryStrategy());
+        exchange.getAttributes().put(Constants.UPSTREAM_EXCLUDE, exclude);
         return chain.execute(exchange);
     }
 

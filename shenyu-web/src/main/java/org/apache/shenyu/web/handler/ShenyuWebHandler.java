@@ -20,6 +20,7 @@ package org.apache.shenyu.web.handler;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.shenyu.common.config.ShenyuConfig;
 import org.apache.shenyu.common.dto.PluginData;
+import org.apache.shenyu.common.enums.PluginEnum;
 import org.apache.shenyu.plugin.api.ShenyuPlugin;
 import org.apache.shenyu.plugin.api.ShenyuPluginChain;
 import org.apache.shenyu.plugin.base.cache.BaseDataCache;
@@ -110,7 +111,7 @@ public final class ShenyuWebHandler implements WebHandler, ApplicationListener<S
             this.plugins = sortPlugins(shenyuPlugins);
         }
     }
-    
+
     /**
      * listen sort plugin event and sort plugin.
      *
@@ -171,6 +172,18 @@ public final class ShenyuWebHandler implements WebHandler, ApplicationListener<S
                 }
                 return Mono.empty();
             });
+        }
+
+        @Override
+        public Mono<Void> executeFrom(ServerWebExchange exchange, PluginEnum pluginEnum) {
+            for (int i = 0; i < plugins.size(); i++) {
+                ShenyuPlugin plugin = plugins.get(i);
+                if (plugin.getOrder() == pluginEnum.getCode()) {
+                    this.index = i;
+                    break;
+                }
+            }
+            return execute(exchange);
         }
     }
 }

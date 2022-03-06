@@ -103,6 +103,16 @@ public interface Constants {
     String HTTP_RETRY = "httpRetry";
 
     /**
+     * The constant RETRY_STRATEGY.
+     */
+    String RETRY_STRATEGY = "retryStrategy";
+
+    /**
+     * The constant UPSTREAM_EXCLUDE.
+     */
+    String UPSTREAM_EXCLUDE = "upstreamExclude";
+
+    /**
      * Original response Content-Type attribute name.
      */
     String ORIGINAL_RESPONSE_CONTENT_TYPE_ATTR = "original_response_content_type";

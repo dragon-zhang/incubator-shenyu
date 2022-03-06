@@ -17,6 +17,7 @@
 
 package org.apache.shenyu.plugin.api;
 
+import org.apache.shenyu.common.enums.PluginEnum;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -26,10 +27,20 @@ import reactor.core.publisher.Mono;
 public interface ShenyuPluginChain {
 
     /**
-     * Delegate to the next {@code WebFilter} in the chain.
+     * Delegate to the next {@code ShenyuPlugin} in the chain.
      *
      * @param exchange the current server exchange
      * @return {@code Mono<Void>} to indicate when request handling is complete
      */
     Mono<Void> execute(ServerWebExchange exchange);
+
+    /**
+     * Delegate to the target {@code ShenyuPlugin} in the chain.
+     * Note: use this method carefully, it can lead to circular execution
+     *
+     * @param exchange   the current server exchange
+     * @param pluginEnum locate target {@code ShenyuPlugin} by {@code PluginEnum}
+     * @return {@code Mono<Void>} to indicate when request handling is complete
+     */
+    Mono<Void> executeFrom(ServerWebExchange exchange, PluginEnum pluginEnum);
 }
