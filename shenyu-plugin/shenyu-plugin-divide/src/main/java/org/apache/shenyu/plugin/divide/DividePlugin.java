@@ -80,7 +80,7 @@ public class DividePlugin extends AbstractShenyuPlugin {
         @SuppressWarnings("all")
         Set<Upstream> exclude = (Set<Upstream>) Optional.ofNullable(exchange.getAttributes().get(Constants.UPSTREAM_EXCLUDE)).orElseGet(() -> Sets.newHashSet());
         List<Upstream> upstreamList = UpstreamCacheManager.getInstance().findUpstreamListBySelectorId(selector.getId())
-                .stream().filter(exclude::contains).collect(Collectors.toList());
+                .stream().filter(data -> !exclude.contains(data)).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(upstreamList)) {
             LOG.error("divide upstream configuration error： {}", rule);
             Object error = ShenyuResultWrap.error(exchange, ShenyuResultEnum.CANNOT_FIND_HEALTHY_UPSTREAM_URL, null);

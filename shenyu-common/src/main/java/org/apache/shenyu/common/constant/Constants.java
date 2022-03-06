@@ -108,6 +108,11 @@ public interface Constants {
     String RETRY_STRATEGY = "retryStrategy";
 
     /**
+     * The constant RETRIED_TIMES.
+     */
+    String RETRIED_TIMES = "retriedTimes";
+
+    /**
      * The constant UPSTREAM_EXCLUDE.
      */
     String UPSTREAM_EXCLUDE = "upstreamExclude";
