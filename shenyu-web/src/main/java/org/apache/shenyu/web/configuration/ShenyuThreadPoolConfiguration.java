@@ -19,7 +19,6 @@ package org.apache.shenyu.web.configuration;
 
 import net.bytebuddy.agent.ByteBuddyAgent;
 import org.apache.shenyu.common.concurrent.MemoryLimitedTaskQueue;
-import org.apache.shenyu.common.concurrent.MemorySafeTaskQueue;
 import org.apache.shenyu.common.concurrent.ShenyuThreadFactory;
 import org.apache.shenyu.common.concurrent.ShenyuThreadPoolExecutor;
 import org.apache.shenyu.common.concurrent.TaskQueue;
@@ -65,27 +64,10 @@ public class ShenyuThreadPoolConfiguration {
     }
 
     /**
-     * MemorySafeTaskQueue.
-     *
-     * @param shenyuConfig the shenyu config
-     * @return instance of {@link MemorySafeTaskQueue}
-     */
-    @Bean
-    @ConditionalOnMissingBean(TaskQueue.class)
-    @ConditionalOnProperty("shenyu.sharedPool.maxFreeMemory")
-    public TaskQueue<Runnable> memorySafeTaskQueue(final ShenyuConfig shenyuConfig) {
-        final ShenyuConfig.SharedPool sharedPool = shenyuConfig.getSharedPool();
-        final Integer maxFreeMemory = sharedPool.getMaxFreeMemory();
-        if (maxFreeMemory <= 0) {
-            throw new ShenyuException("${shenyu.sharedPool.maxFreeMemory} must bigger than 0 !");
-        }
-        return new MemorySafeTaskQueue<>(maxFreeMemory);
-    }
-
-    /**
      * crate shenyu shared thread pool executor.
      *
      * @param shenyuConfig the shenyu config
+     * @param provider     the queue bean provider
      * @return the shenyu thread pool executor
      */
     @Bean
