@@ -54,4 +54,8 @@ public final class MatchStrategyFactory {
     public static boolean match(final Integer strategy, final List<ConditionData> conditionDataList, final ServerWebExchange exchange) {
         return newInstance(strategy).match(conditionDataList, exchange);
     }
+
+    public static List<ConditionData> findMatchedCondition(final Integer strategy, final List<ConditionData> conditionDataList, final ServerWebExchange exchange) {
+        return newInstance(strategy).findMatchedCondition(conditionDataList, exchange);
+    }
 }

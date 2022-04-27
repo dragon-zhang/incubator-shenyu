@@ -18,6 +18,7 @@
 package org.apache.shenyu.plugin.base;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.shenyu.common.dto.ConditionData;
 import org.apache.shenyu.common.dto.PluginData;
 import org.apache.shenyu.common.dto.RuleData;
 import org.apache.shenyu.common.dto.SelectorData;
@@ -32,8 +33,11 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * abstract shenyu plugin please extends.
@@ -104,19 +108,31 @@ public abstract class AbstractShenyuPlugin implements ShenyuPlugin {
     }
 
     private SelectorData matchSelector(final ServerWebExchange exchange, final Collection<SelectorData> selectors) {
-        return selectors.stream()
-                .filter(selector -> selector.getEnabled() && filterSelector(selector, exchange))
+        //todo 把modeConditionMap重构到BaseDataCache里
+        Map<Integer, List<ConditionData>> modeConditionMap = new ConcurrentHashMap<>();
+        selectors.stream()
+                .filter(selector -> {
+                    if (selector.getEnabled()) {
+                        if (selector.getType() == SelectorTypeEnum.CUSTOM_FLOW.getCode()) {
+                            return !CollectionUtils.isEmpty(selector.getConditionList());
+                        }
+                        return true;
+                    }
+                    return false;
+                })
+                .forEach(selector -> {
+                    List<ConditionData> exist = modeConditionMap.computeIfAbsent(selector.getMatchMode(), key -> new LinkedList<>());
+                    exist.addAll(selector.getConditionList());
+                });
+        return modeConditionMap.entrySet().stream()
+                .map(entry -> {
+                    final Integer matchMode = entry.getKey();
+                    final List<ConditionData> conditionDataList = entry.getValue();
+                    return MatchStrategyFactory.findMatchedCondition(matchMode, conditionDataList, exchange);
+                })
+                .flatMap(Collection::stream)
+                .map(condition -> BaseDataCache.getInstance().obtainSelectorData(condition))
                 .findFirst().orElse(null);
-    }
-
-    private Boolean filterSelector(final SelectorData selector, final ServerWebExchange exchange) {
-        if (selector.getType() == SelectorTypeEnum.CUSTOM_FLOW.getCode()) {
-            if (CollectionUtils.isEmpty(selector.getConditionList())) {
-                return false;
-            }
-            return MatchStrategyFactory.match(selector.getMatchMode(), selector.getConditionList(), exchange);
-        }
-        return true;
     }
 
     private RuleData matchRule(final ServerWebExchange exchange, final Collection<RuleData> rules) {

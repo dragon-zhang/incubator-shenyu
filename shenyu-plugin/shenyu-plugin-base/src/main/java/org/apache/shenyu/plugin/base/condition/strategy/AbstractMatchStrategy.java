@@ -17,6 +17,8 @@
 
 package org.apache.shenyu.plugin.base.condition.strategy;
 
+import org.apache.shenyu.common.cache.MemorySafeLRUMap;
+import org.apache.shenyu.common.constant.Constants;
 import org.apache.shenyu.common.dto.ConditionData;
 import org.apache.shenyu.plugin.base.condition.data.ParameterDataFactory;
 import org.apache.shenyu.plugin.base.condition.judge.PredicateJudgeFactory;
@@ -24,11 +26,14 @@ import org.springframework.web.server.ServerWebExchange;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * AbstractMatchStrategy.
  */
 public abstract class AbstractMatchStrategy implements MatchStrategy {
+
+    private static final MemorySafeLRUMap<String, ConditionData> CACHE = new MemorySafeLRUMap<>(Constants.THE_256_MB, 1 << 16);
 
     @Override
     public final Boolean match(final List<ConditionData> conditionDataList, final ServerWebExchange exchange) {
@@ -39,6 +44,26 @@ public abstract class AbstractMatchStrategy implements MatchStrategy {
             results.add(result);
         }
         return merge(results);
+    }
+
+    @Override
+    public List<ConditionData> findMatchedCondition(List<ConditionData> conditionDataList, ServerWebExchange exchange) {
+        List<ConditionData> results = new LinkedList<>();
+        for (ConditionData condition : conditionDataList) {
+            final String realData = buildRealData(condition, exchange);
+            final ConditionData conditionData = CACHE.get(realData);
+            if (Objects.nonNull(conditionData)) {
+                results.add(conditionData);
+                continue;
+            }
+            final Boolean result = PredicateJudgeFactory.judge(condition, realData);
+            if (!result) {
+                continue;
+            }
+            CACHE.put(realData, condition);
+            results.add(condition);
+        }
+        return results;
     }
 
     /**

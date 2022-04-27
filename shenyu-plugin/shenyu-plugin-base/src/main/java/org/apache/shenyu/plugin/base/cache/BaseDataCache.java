@@ -19,6 +19,7 @@ package org.apache.shenyu.plugin.base.cache;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.shenyu.common.dto.ConditionData;
 import org.apache.shenyu.common.dto.PluginData;
 import org.apache.shenyu.common.dto.RuleData;
 import org.apache.shenyu.common.dto.SelectorData;
@@ -46,6 +47,10 @@ public final class BaseDataCache {
      */
     private static final ConcurrentMap<String, List<SelectorData>> SELECTOR_MAP = Maps.newConcurrentMap();
 
+    private static final ConcurrentMap<String, List<ConditionData>> SELECTOR_CONDITION_MAP = Maps.newConcurrentMap();
+
+    private static final ConcurrentMap<ConditionData, SelectorData> CONDITION_SELECTOR_MAP = Maps.newConcurrentMap();
+
     /**
      * selectorId -> RuleData.
      */
@@ -53,7 +58,7 @@ public final class BaseDataCache {
 
     private BaseDataCache() {
     }
-    
+
     /**
      * Gets instance.
      *
@@ -62,7 +67,7 @@ public final class BaseDataCache {
     public static BaseDataCache getInstance() {
         return INSTANCE;
     }
-    
+
     /**
      * Cache plugin data.
      *
@@ -71,7 +76,7 @@ public final class BaseDataCache {
     public void cachePluginData(final PluginData pluginData) {
         Optional.ofNullable(pluginData).ifPresent(data -> PLUGIN_MAP.put(data.getName(), data));
     }
-    
+
     /**
      * Remove plugin data.
      *
@@ -80,7 +85,7 @@ public final class BaseDataCache {
     public void removePluginData(final PluginData pluginData) {
         Optional.ofNullable(pluginData).ifPresent(data -> PLUGIN_MAP.remove(data.getName()));
     }
-    
+
     /**
      * Remove plugin data by plugin name.
      *
@@ -89,14 +94,14 @@ public final class BaseDataCache {
     public void removePluginDataByPluginName(final String pluginName) {
         PLUGIN_MAP.remove(pluginName);
     }
-    
+
     /**
      * Clean plugin data.
      */
     public void cleanPluginData() {
         PLUGIN_MAP.clear();
     }
-    
+
     /**
      * Clean plugin data self.
      *
@@ -105,7 +110,7 @@ public final class BaseDataCache {
     public void cleanPluginDataSelf(final List<PluginData> pluginDataList) {
         pluginDataList.forEach(this::removePluginData);
     }
-    
+
     /**
      * Obtain plugin data plugin data.
      *
@@ -115,7 +120,7 @@ public final class BaseDataCache {
     public PluginData obtainPluginData(final String pluginName) {
         return PLUGIN_MAP.get(pluginName);
     }
-    
+
     /**
      * Cache select data.
      *
@@ -124,7 +129,7 @@ public final class BaseDataCache {
     public void cacheSelectData(final SelectorData selectorData) {
         Optional.ofNullable(selectorData).ifPresent(this::selectorAccept);
     }
-    
+
     /**
      * Remove select data.
      *
@@ -136,23 +141,32 @@ public final class BaseDataCache {
             Optional.ofNullable(selectorDataList).ifPresent(list -> list.removeIf(e -> e.getId().equals(data.getId())));
         });
     }
-    
+
     /**
      * Remove select data by plugin name.
      *
      * @param pluginName the plugin name
      */
     public void removeSelectDataByPluginName(final String pluginName) {
+        Optional.ofNullable(SELECTOR_MAP.get(pluginName))
+                .ifPresent(selectors -> {
+                    for (SelectorData selector : selectors) {
+                        for (ConditionData conditionData : selector.getConditionList()) {
+                            CONDITION_SELECTOR_MAP.remove(conditionData, selector);
+                        }
+                    }
+                });
         SELECTOR_MAP.remove(pluginName);
     }
-    
+
     /**
      * Clean selector data.
      */
     public void cleanSelectorData() {
         SELECTOR_MAP.clear();
+        CONDITION_SELECTOR_MAP.clear();
     }
-    
+
     /**
      * Clean selector data self.
      *
@@ -161,7 +175,7 @@ public final class BaseDataCache {
     public void cleanSelectorDataSelf(final List<SelectorData> selectorDataList) {
         selectorDataList.forEach(this::removeSelectData);
     }
-    
+
     /**
      * Obtain selector data list list.
      *
@@ -171,7 +185,11 @@ public final class BaseDataCache {
     public List<SelectorData> obtainSelectorData(final String pluginName) {
         return SELECTOR_MAP.get(pluginName);
     }
-    
+
+    public SelectorData obtainSelectorData(final ConditionData conditionData) {
+        return CONDITION_SELECTOR_MAP.get(conditionData);
+    }
+
     /**
      * Cache rule data.
      *
@@ -180,7 +198,7 @@ public final class BaseDataCache {
     public void cacheRuleData(final RuleData ruleData) {
         Optional.ofNullable(ruleData).ifPresent(this::ruleAccept);
     }
-    
+
     /**
      * Remove rule data.
      *
@@ -192,7 +210,7 @@ public final class BaseDataCache {
             Optional.ofNullable(ruleDataList).ifPresent(list -> list.removeIf(rule -> rule.getId().equals(data.getId())));
         });
     }
-    
+
     /**
      * Remove rule data by selector id.
      *
@@ -201,14 +219,14 @@ public final class BaseDataCache {
     public void removeRuleDataBySelectorId(final String selectorId) {
         RULE_MAP.remove(selectorId);
     }
-    
+
     /**
      * Clean rule data.
      */
     public void cleanRuleData() {
         RULE_MAP.clear();
     }
-    
+
     /**
      * Clean rule data self.
      *
@@ -217,7 +235,7 @@ public final class BaseDataCache {
     public void cleanRuleDataSelf(final List<RuleData> ruleDataList) {
         ruleDataList.forEach(this::removeRuleData);
     }
-    
+
     /**
      * Obtain rule data list list.
      *
@@ -229,7 +247,7 @@ public final class BaseDataCache {
     }
 
     /**
-     *  cache rule data.
+     * cache rule data.
      *
      * @param data the rule data
      */
@@ -265,6 +283,11 @@ public final class BaseDataCache {
             } else {
                 SELECTOR_MAP.put(key, Lists.newArrayList(data));
             }
+            Optional.ofNullable(data.getConditionList()).ifPresent(conditionDataList -> {
+                for (ConditionData conditionData : conditionDataList) {
+                    CONDITION_SELECTOR_MAP.put(conditionData, data);
+                }
+            });
         }
     }
 }

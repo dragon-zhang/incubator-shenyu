@@ -37,4 +37,6 @@ public interface MatchStrategy {
      * @return true is match , false is not match.
      */
     Boolean match(List<ConditionData> conditionDataList, ServerWebExchange exchange);
+
+    List<ConditionData> findMatchedCondition(List<ConditionData> conditionDataList, ServerWebExchange exchange);
 }
