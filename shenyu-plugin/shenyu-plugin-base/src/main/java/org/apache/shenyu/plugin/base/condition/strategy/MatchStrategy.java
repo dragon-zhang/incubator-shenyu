@@ -63,24 +63,26 @@ public interface MatchStrategy {
      * @param exchange          {@linkplain org.springframework.web.server.ServerWebExchange}
      * @return matched selectors
      */
-    default List<SelectorData> findMatchedSelectors(String pluginName, List<ConditionData> conditionDataList, ServerWebExchange exchange) {
-        return conditionDataList.stream()
+    default Boolean matchSelector(String pluginName, List<ConditionData> conditionDataList, ServerWebExchange exchange) {
+        final List<Boolean> results = conditionDataList.stream()
                 .map(condition -> {
                     // condition and real data are not mapped one-to-one, so we need to add a plugin condition
                     final String realData = buildRealData(condition, exchange);
                     final SelectorData matched = BaseDataCache.getInstance().obtainMatchedSelector(pluginName, realData);
                     if (Objects.nonNull(matched)) {
-                        return matched;
+                        return true;
                     }
                     final SelectorData selectorData = BaseDataCache.getInstance().getSelectorData(condition.getId());
                     final Boolean match = PredicateJudgeFactory.judge(condition, realData);
                     if (match && Objects.nonNull(selectorData)) {
                         BaseDataCache.getInstance().cacheMatchedSelector(pluginName, realData, selectorData);
-                        return selectorData;
+                        return true;
                     }
-                    return null;
+                    return false;
                 })
-                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+        return merge(results);
     }
+
+    Boolean merge(List<Boolean> results);
 }

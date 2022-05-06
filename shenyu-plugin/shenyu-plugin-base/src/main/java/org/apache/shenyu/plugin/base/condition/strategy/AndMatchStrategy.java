@@ -36,4 +36,9 @@ public class AndMatchStrategy implements MatchStrategy {
                 .stream()
                 .allMatch(condition -> PredicateJudgeFactory.judge(condition, buildRealData(condition, exchange)));
     }
+
+    @Override
+    public Boolean merge(final List<Boolean> results) {
+        return results.stream().allMatch(result -> result);
+    }
 }

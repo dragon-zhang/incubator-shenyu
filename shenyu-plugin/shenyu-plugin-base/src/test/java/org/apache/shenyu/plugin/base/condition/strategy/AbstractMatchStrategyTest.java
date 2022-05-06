@@ -119,5 +119,10 @@ public final class AbstractMatchStrategyTest {
         public Boolean match(final List<ConditionData> conditionDataList, final ServerWebExchange exchange) {
             throw new UnsupportedOperationException();
         }
+
+        @Override
+        public Boolean merge(List<Boolean> results) {
+            throw new UnsupportedOperationException();
+        }
     }
 }

@@ -18,7 +18,6 @@
 package org.apache.shenyu.plugin.base.condition.strategy;
 
 import org.apache.shenyu.common.dto.ConditionData;
-import org.apache.shenyu.common.dto.SelectorData;
 import org.apache.shenyu.common.enums.MatchModeEnum;
 import org.apache.shenyu.spi.ExtensionLoader;
 import org.springframework.web.server.ServerWebExchange;
@@ -47,25 +46,12 @@ public final class MatchStrategyFactory {
     /**
      * Match boolean.
      *
-     * @param strategy          the strategy
+     * @param strategy the strategy
      * @param conditionDataList the condition data list
-     * @param exchange          the exchange
+     * @param exchange the exchange
      * @return the boolean
      */
     public static boolean match(final Integer strategy, final List<ConditionData> conditionDataList, final ServerWebExchange exchange) {
         return newInstance(strategy).match(conditionDataList, exchange);
-    }
-
-    /**
-     * find matched selectors.
-     *
-     * @param pluginName        the plugin name
-     * @param strategy          the strategy
-     * @param conditionDataList the condition data list
-     * @param exchange          the exchange
-     * @return the matched selectors
-     */
-    public static List<SelectorData> findMatchedSelectors(final String pluginName, final Integer strategy, final List<ConditionData> conditionDataList, final ServerWebExchange exchange) {
-        return newInstance(strategy).findMatchedSelectors(pluginName, conditionDataList, exchange);
     }
 }
