@@ -157,7 +157,7 @@ public class HttpClientRegisterRepository extends FailbackRegistryRepository {
             i++;
             String concat = server.concat(path);
             try {
-                String accessToken = this.accessToken.getIfPresent(server);
+                String accessToken = this.accessToken.get(server);
                 if (StringUtils.isBlank(accessToken)) {
                     throw new NullPointerException("accessToken is null");
                 }
@@ -176,7 +176,7 @@ public class HttpClientRegisterRepository extends FailbackRegistryRepository {
         for (String server : serverList) {
             String concat = server.concat(Constants.OFFLINE_PATH);
             try {
-                String accessToken = this.accessToken.getIfPresent(server);
+                String accessToken = this.accessToken.get(server);
                 if (StringUtils.isBlank(accessToken)) {
                     throw new NullPointerException("accessToken is null");
                 }
