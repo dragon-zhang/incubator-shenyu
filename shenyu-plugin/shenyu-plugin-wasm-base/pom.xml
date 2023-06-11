@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one or more
+  ~ contributor license agreements.  See the NOTICE file distributed with
+  ~ this work for additional information regarding copyright ownership.
+  ~ The ASF licenses this file to You under the Apache License, Version 2.0
+  ~ (the "License"); you may not use this file except in compliance with
+  ~ the License.  You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <groupId>org.apache.shenyu</groupId>
+        <artifactId>shenyu-plugin</artifactId>
+        <version>2.6.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>shenyu-plugin-wasm-base</artifactId>
+
+    <profiles>
+        <!-- https://github.com/openjdk/jdk/blob/jdk-16%2B36/src/java.base/windows/native/libjava/java_props_md.c#L568 -->
+        <!-- macos -->
+        <profile>
+            <id>macos-arm64</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.wasmer</groupId>
+                    <artifactId>wasmer-jni-arm64-aarch64</artifactId>
+                    <version>0.3.0</version>
+                    <scope>system</scope>
+                    <systemPath>${basedir}/src/main/resources/wasmer-jni-arm64-darwin-0.3.0.jar</systemPath>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>macos-amd64</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                </os>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.wasmer</groupId>
+                    <artifactId>wasmer-jni-amd64-darwin</artifactId>
+                    <version>0.3.0</version>
+                    <scope>system</scope>
+                    <systemPath>${basedir}/src/main/resources/wasmer-jni-amd64-darwin-0.3.0.jar</systemPath>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <!-- linux -->
+        <profile>
+            <id>linux-amd64</id>
+            <activation>
+                <os>
+                    <name>linux</name>
+                    <arch>amd64</arch>
+                </os>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.wasmer</groupId>
+                    <artifactId>wasmer-jni-amd64-linux</artifactId>
+                    <version>0.3.0</version>
+                    <scope>system</scope>
+                    <systemPath>${basedir}/src/main/resources/wasmer-jni-amd64-linux-0.3.0.jar</systemPath>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <!-- windows -->
+        <profile>
+            <id>windows-amd64</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                    <arch>amd64</arch>
+                </os>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.wasmer</groupId>
+                    <artifactId>wasmer-jni-amd64-windows</artifactId>
+                    <version>0.3.0</version>
+                    <scope>system</scope>
+                    <systemPath>${basedir}/src/main/resources/wasmer-jni-amd64-windows-0.3.0.jar</systemPath>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.shenyu</groupId>
+            <artifactId>shenyu-plugin-base</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+</project>
