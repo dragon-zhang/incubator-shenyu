@@ -11,7 +11,7 @@ public class SimpleWasmTest {
     @Test
     public void test() throws Throwable {
         // `simple.wasm` is located at `tests/resources/`.
-        Path wasmPath = Paths.get(this.getClass().getClassLoader().getResource("simple.wasm").getPath());
+        Path wasmPath = Paths.get(this.getClass().getClassLoader().getResource("simple.wasm").toURI());
         
         // Reads the WebAssembly module as bytes.
         byte[] wasmBytes = Files.readAllBytes(wasmPath);

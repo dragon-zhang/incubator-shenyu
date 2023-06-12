@@ -40,7 +40,7 @@
             <dependencies>
                 <dependency>
                     <groupId>org.wasmer</groupId>
-                    <artifactId>wasmer-jni-arm64-aarch64</artifactId>
+                    <artifactId>wasmer-jni-arm64-darwin</artifactId>
                     <version>0.3.0</version>
                     <scope>system</scope>
                     <systemPath>${basedir}/src/main/resources/wasmer-jni-arm64-darwin-0.3.0.jar</systemPath>
@@ -52,6 +52,7 @@
             <activation>
                 <os>
                     <family>mac</family>
+                    <arch>!aarch64</arch>
                 </os>
             </activation>
             <dependencies>
