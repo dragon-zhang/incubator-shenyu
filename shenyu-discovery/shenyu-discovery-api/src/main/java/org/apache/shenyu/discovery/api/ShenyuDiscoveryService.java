@@ -21,6 +21,8 @@ import org.apache.shenyu.discovery.api.config.DiscoveryConfig;
 import org.apache.shenyu.discovery.api.listener.DataChangedEventListener;
 import org.apache.shenyu.spi.SPI;
 
+import java.util.List;
+
 /**
  * The interface for shenyu discovery service.
  */
@@ -43,6 +45,13 @@ public interface ShenyuDiscoveryService {
     void watcher(String key, DataChangedEventListener listener);
 
     /**
+     * unWatcher path.
+     *
+     * @param key key
+     */
+    void unWatcher(String key);
+
+    /**
      * Register data.
      *
      * @param key   the key
@@ -56,6 +65,19 @@ public interface ShenyuDiscoveryService {
      * @param key key
      * @return value
      */
-    String getData(String key);
+    List<String> getRegisterData(String key);
+
+    /**
+     * exits.
+     *
+     * @param key key
+     * @return Boolean
+     */
+    Boolean exits(String key);
+
+    /**
+     * shutdown.
+     */
+    void shutdown();
 
 }

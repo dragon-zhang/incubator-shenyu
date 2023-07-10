@@ -17,11 +17,14 @@
 
 package org.apache.shenyu.admin.mapper;
 
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.shenyu.admin.model.entity.DiscoveryRelDO;
 
 /**
  * DiscoveryRelMapper.
  */
+@Mapper
 public interface DiscoveryRelMapper {
 
     /**
@@ -33,7 +36,16 @@ public interface DiscoveryRelMapper {
     DiscoveryRelDO selectById(String id);
 
     /**
+     * select discoveryRel by proxy selector id.
+     *
+     * @param proxySelectorId proxy selector id.
+     * @return {@linkplain DiscoveryRelDO}
+     */
+    DiscoveryRelDO selectByProxySelectorId(String proxySelectorId);
+
+    /**
      * insert discoveryRelDO.
+     *
      * @param discoveryRelDO discoveryRelDO.
      * @return rows
      */
@@ -65,8 +77,18 @@ public interface DiscoveryRelMapper {
 
     /**
      * delete discoveryRel by id.
+     *
      * @param id primary key.
      * @return rows.
      */
     int delete(String id);
+
+    /**
+     * selectByDiscoveryHandlerId.
+     *
+     * @param discoveryHandlerId discoveryHandlerId
+     * @return DiscoveryRelDO
+     */
+    DiscoveryRelDO selectByDiscoveryHandlerId(@Param("discoveryHandlerId") String discoveryHandlerId);
+
 }

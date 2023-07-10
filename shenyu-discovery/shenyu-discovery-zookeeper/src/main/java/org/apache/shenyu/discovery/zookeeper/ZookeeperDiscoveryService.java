@@ -20,17 +20,19 @@ package org.apache.shenyu.discovery.zookeeper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.framework.api.CuratorWatcher;
+import org.apache.curator.framework.recipes.cache.ChildData;
+import org.apache.curator.framework.recipes.cache.TreeCache;
+import org.apache.curator.framework.recipes.cache.TreeCacheListener;
 import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.shenyu.common.exception.ShenyuException;
 import org.apache.shenyu.discovery.api.ShenyuDiscoveryService;
 import org.apache.shenyu.discovery.api.config.DiscoveryConfig;
-import org.apache.shenyu.discovery.api.listener.DataChangedEvent;
+import org.apache.shenyu.discovery.api.listener.DiscoveryDataChangedEvent;
 import org.apache.shenyu.discovery.api.listener.DataChangedEventListener;
 import org.apache.shenyu.spi.Join;
 import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +40,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The type Zookeeper for shenyu discovery service.
@@ -51,6 +56,8 @@ public class ZookeeperDiscoveryService implements ShenyuDiscoveryService {
 
     private final Map<String, String> nodeDataMap = new HashMap<>();
 
+    private final Map<String, TreeCache> cacheMap = new HashMap<>();
+
     @Override
     public void init(final DiscoveryConfig config) {
         String baseSleepTimeMilliseconds = config.getProps().getProperty("baseSleepTimeMilliseconds", "1000");
@@ -58,6 +65,7 @@ public class ZookeeperDiscoveryService implements ShenyuDiscoveryService {
         String maxSleepTimeMilliseconds = config.getProps().getProperty("maxSleepTimeMilliseconds", "1000");
         String connectionTimeoutMilliseconds = config.getProps().getProperty("connectionTimeoutMilliseconds", "1000");
         String sessionTimeoutMilliseconds = config.getProps().getProperty("sessionTimeoutMilliseconds", "1000");
+        String namespace = config.getProps().getProperty("namespace", "");
         String digest = config.getProps().getProperty("digest", null);
         ExponentialBackoffRetry retryPolicy = new ExponentialBackoffRetry(Integer.parseInt(baseSleepTimeMilliseconds), Integer.parseInt(maxRetries), Integer.parseInt(maxSleepTimeMilliseconds));
         CuratorFrameworkFactory.Builder builder = CuratorFrameworkFactory.builder()
@@ -65,7 +73,7 @@ public class ZookeeperDiscoveryService implements ShenyuDiscoveryService {
                 .retryPolicy(retryPolicy)
                 .connectionTimeoutMs(Integer.parseInt(connectionTimeoutMilliseconds))
                 .sessionTimeoutMs(Integer.parseInt(sessionTimeoutMilliseconds))
-                .namespace(config.getName());
+                .namespace(namespace);
         if (StringUtils.isNoneBlank(digest)) {
             builder.authorization("digest", digest.getBytes(StandardCharsets.UTF_8));
         }
@@ -77,7 +85,7 @@ public class ZookeeperDiscoveryService implements ShenyuDiscoveryService {
         this.client.getConnectionStateListenable().addListener((c, newState) -> {
             if (newState == ConnectionState.RECONNECTED) {
                 nodeDataMap.forEach((k, v) -> {
-                    if (!this.isExist(k)) {
+                    if (!this.exits(k)) {
                         this.createOrUpdate(k, v, CreateMode.EPHEMERAL);
                         LOGGER.info("zookeeper client register instance success: key={}|value={}", k, v);
                     }
@@ -86,15 +94,18 @@ public class ZookeeperDiscoveryService implements ShenyuDiscoveryService {
         });
         this.client.start();
         try {
-            this.client.blockUntilConnected();
+            if (!this.client.blockUntilConnected(30, TimeUnit.SECONDS)) {
+                throw new ShenyuException("shenyu start ZookeeperDiscoveryService failure 30 seconds timeout");
+            }
         } catch (InterruptedException e) {
             throw new ShenyuException(e);
         }
     }
 
-    private boolean isExist(final String key) {
+    @Override
+    public Boolean exits(final String key) {
         try {
-            return Objects.nonNull(client.checkExists().forPath(key));
+            return null != client.checkExists().forPath(key);
         } catch (Exception e) {
             throw new ShenyuException(e);
         }
@@ -112,59 +123,84 @@ public class ZookeeperDiscoveryService implements ShenyuDiscoveryService {
     @Override
     public void watcher(final String key, final DataChangedEventListener listener) {
         try {
-            this.client.getData().usingWatcher(new CuratorWatcher() {
-                @Override
-                public void process(final WatchedEvent watchedEvent) throws Exception {
-                    if (Objects.nonNull(listener)) {
-                        String path = Objects.isNull(watchedEvent.getPath()) ? "" : watchedEvent.getPath();
-                        if (StringUtils.isNoneBlank(path)) {
-                            client.getData().usingWatcher(this).forPath(path);
-                            byte[] ret = client.getData().forPath(key);
-                            String data = Objects.isNull(ret) ? null : new String(ret, StandardCharsets.UTF_8);
-                            LOGGER.info("shenyu ZookeeperDiscoveryService onChange key={}", path);
-                            listener.onChange(buildDataChangedEvent(path, data, watchedEvent));
-                        }
+            TreeCache treeCache = new TreeCache(client, key);
+            TreeCacheListener treeCacheListener = (curatorFramework, event) -> {
+                ChildData data = event.getData();
+                DiscoveryDataChangedEvent dataChangedEvent;
+                if (Objects.nonNull(data) && Objects.nonNull(data.getData())) {
+                    String currentPath = data.getPath();
+                    String currentData = new String(data.getData(), StandardCharsets.UTF_8);
+                    LOGGER.info("shenyu find resultData ={}", currentData);
+                    Stat stat = data.getStat();
+                    boolean isEphemeral = Objects.nonNull(stat) && stat.getEphemeralOwner() > 0;
+                    if (!isEphemeral) {
+                        LOGGER.info("shenyu Ignore non-ephemeral node changes");
+                        return;
                     }
+                    switch (event.getType()) {
+                        case NODE_ADDED:
+                            dataChangedEvent = new DiscoveryDataChangedEvent(currentPath, currentData, DiscoveryDataChangedEvent.Event.ADDED);
+                            break;
+                        case NODE_UPDATED:
+                            dataChangedEvent = new DiscoveryDataChangedEvent(currentPath, currentData, DiscoveryDataChangedEvent.Event.UPDATED);
+                            break;
+                        case NODE_REMOVED:
+                            dataChangedEvent = new DiscoveryDataChangedEvent(currentPath, currentData, DiscoveryDataChangedEvent.Event.DELETED);
+                            break;
+                        default:
+                            dataChangedEvent = new DiscoveryDataChangedEvent(currentPath, currentData, DiscoveryDataChangedEvent.Event.IGNORED);
+                            break;
+                    }
+                    listener.onChange(dataChangedEvent);
                 }
-            }).forPath(key);
+            };
+            treeCache.getListenable().addListener(treeCacheListener);
+            treeCache.start();
+            cacheMap.put(key, treeCache);
         } catch (Exception e) {
             throw new ShenyuException(e);
+        }
+    }
+
+    @Override
+    public void unWatcher(final String key) {
+        if (cacheMap.containsKey(key)) {
+            cacheMap.remove(key).close();
         }
     }
 
     @Override
     public void register(final String key, final String value) {
-        this.createOrUpdate(key, value, CreateMode.EPHEMERAL);
+        this.createOrUpdate(key, value, CreateMode.PERSISTENT);
     }
 
     @Override
-    public String getData(final String key) {
+    public List<String> getRegisterData(final String key) {
         try {
-            byte[] ret = client.getData().forPath(key);
-            return Objects.isNull(ret) ? null : new String(ret, StandardCharsets.UTF_8);
+            List<String> children = client.getChildren().forPath(key);
+            List<String> datas = new ArrayList<>();
+            for (String child : children) {
+                String nodePath = key + "/" + child;
+                byte[] data = client.getData().forPath(nodePath);
+                datas.add(new String(data, StandardCharsets.UTF_8));
+            }
+            return datas;
         } catch (Exception e) {
             throw new ShenyuException(e);
         }
     }
 
-    private DataChangedEvent buildDataChangedEvent(final String key, final String value, final WatchedEvent watchedEvent) {
-        DataChangedEvent.Event event = null;
-        switch (watchedEvent.getType()) {
-            case NodeCreated:
-                event = DataChangedEvent.Event.ADDED;
-                break;
-            case NodeDeleted:
-                event = DataChangedEvent.Event.DELETED;
-                break;
-            case NodeDataChanged:
-                event = DataChangedEvent.Event.UPDATED;
-                break;
-            case NodeChildrenChanged:
-            case DataWatchRemoved:
-            case ChildWatchRemoved:
-            default:
-                event = DataChangedEvent.Event.IGNORED;
+    @Override
+    public void shutdown() {
+        try {
+            //close treeCache
+            for (String key : cacheMap.keySet()) {
+                cacheMap.get(key).close();
+            }
+            client.close();
+        } catch (Exception e) {
+            throw new ShenyuException(e);
         }
-        return new DataChangedEvent(key, value, event);
+
     }
 }

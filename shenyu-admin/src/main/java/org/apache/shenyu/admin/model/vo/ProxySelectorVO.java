@@ -17,10 +17,12 @@
 
 package org.apache.shenyu.admin.model.vo;
 
-import org.apache.shenyu.admin.model.entity.ProxySelectorDO;
-import org.apache.shenyu.common.utils.DateUtils;
+import org.apache.shenyu.admin.model.dto.DiscoveryDTO;
+import org.apache.shenyu.admin.model.dto.DiscoveryUpstreamDTO;
 
 import java.io.Serializable;
+import java.sql.Timestamp;
+import java.util.List;
 
 /**
  * this is proxy selector view to web front.
@@ -30,7 +32,7 @@ public class ProxySelectorVO implements Serializable {
     private static final long serialVersionUID = -1329374830009912963L;
 
     /**
-     * id.
+     * proxy selector id.
      */
     private String id;
 
@@ -38,11 +40,6 @@ public class ProxySelectorVO implements Serializable {
      * proxy selector name.
      */
     private String name;
-
-    /**
-     * pluginName.
-     */
-    private String pluginName;
 
     /**
      * forward port.
@@ -55,19 +52,46 @@ public class ProxySelectorVO implements Serializable {
     private String type;
 
     /**
+     * listener node.
+     */
+    private String listenerNode;
+
+    /**
+     * handler.
+     */
+    private String handler;
+
+    /**
+     * discoveryHandlerId.
+     */
+    private String discoveryHandlerId;
+
+    /**
+     * createTime.
+     */
+
+    private Timestamp createTime;
+
+    /**
+     * updateTime.
+     */
+    private Timestamp updateTime;
+
+    /**
      * props.
      */
     private String props;
 
-    /**
-     * created time.
-     */
-    private String dateCreated;
 
     /**
-     * updated time.
+     * discovery.
      */
-    private String dateUpdated;
+    private DiscoveryDTO discovery;
+
+    /**
+     * discovery upstream list.
+     */
+    private List<DiscoveryUpstreamDTO> discoveryUpstreams;
 
     /**
      * ProxySelectorVO.
@@ -79,26 +103,66 @@ public class ProxySelectorVO implements Serializable {
     /**
      * ProxySelectorVO.
      *
-     * @param id          id
-     * @param name        name
-     * @param pluginName  pluginName
-     * @param forwardPort forwardPort
-     * @param type        type
-     * @param props       props
-     * @param dateCreated dateCreated
-     * @param dateUpdated dateUpdated
+     * @param name name of the proxy
+     * @param forwardPort forward port
+     * @param type type of the proxy
+     * @param listenerNode listener
+     * @param handler handler
+     * @param discovery discovery
+     * @param discoveryUpstreams discoveryUpstreams
+     * @param props props
      */
-    public ProxySelectorVO(final String id, final String name, final String pluginName, final Integer forwardPort,
-                           final String type, final String props, final String dateCreated, final String dateUpdated) {
-
+    public ProxySelectorVO(final String id, final String name, final Integer forwardPort, final String type, final String listenerNode,
+                           final String handler, final String discoveryHandlerId, final Timestamp createTime, final Timestamp updateTime, final DiscoveryDTO discovery,
+                           final List<DiscoveryUpstreamDTO> discoveryUpstreams, final String props) {
         this.id = id;
         this.name = name;
-        this.pluginName = pluginName;
         this.forwardPort = forwardPort;
         this.type = type;
+        this.listenerNode = listenerNode;
+        this.handler = handler;
+        this.discoveryHandlerId = discoveryHandlerId;
+        this.discovery = discovery;
+        this.discoveryUpstreams = discoveryUpstreams;
+        this.createTime = createTime;
+        this.updateTime = updateTime;
         this.props = props;
-        this.dateCreated = dateCreated;
-        this.dateUpdated = dateUpdated;
+    }
+
+    /**
+     * getId.
+     *
+     * @return name
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * setId.
+     *
+     * @param id id
+     */
+    public void setId(final String id) {
+        this.id = id;
+    }
+
+    /**
+     * get type.
+     *
+     * @return type of selector
+     */
+    public String getType() {
+        return type;
+    }
+
+    /**
+     * set type of selector.
+     *
+     * @param type type of selector
+     */
+    public void setType(final String type) {
+        this.type = type;
     }
 
     /**
@@ -142,56 +206,134 @@ public class ProxySelectorVO implements Serializable {
     }
 
     /**
-     * getDateCreated.
-     *
-     * @return dateCreated
+     * get listener node.
+     * @return listener node
      */
-    public String getDateCreated() {
-
-        return dateCreated;
+    public String getListenerNode() {
+        return listenerNode;
     }
 
     /**
-     * setDateCreated.
-     *
-     * @param dateCreated dateCreated
+     * set listener node.
+     * @param listenerNode listener node
      */
-    public void setDateCreated(final String dateCreated) {
-
-        this.dateCreated = dateCreated;
+    public void setListenerNode(final String listenerNode) {
+        this.listenerNode = listenerNode;
     }
 
     /**
-     * getDateUpdated.
-     *
-     * @return dateUpdated
+     * get handler.
+     * @return handler
      */
-    public String getDateUpdated() {
-
-        return dateUpdated;
+    public String getHandler() {
+        return handler;
     }
 
     /**
-     * setDateUpdated.
+     * getDiscoveryHandlerId.
      *
-     * @param dateUpdated dateUpdated
+     * @return discoveryHandlerId
      */
-    public void setDateUpdated(final String dateUpdated) {
-
-        this.dateUpdated = dateUpdated;
+    public String getDiscoveryHandlerId() {
+        return discoveryHandlerId;
     }
 
     /**
-     * buildProxySelectorVO.
+     * setDiscoveryHandlerId.
      *
-     * @param proxySelectorDO proxySelectorDO
-     * @return ProxySelectorVO
+     * @param discoveryHandlerId discoveryHandlerId
      */
-    public static ProxySelectorVO buildProxySelectorVO(final ProxySelectorDO proxySelectorDO) {
+    public void setDiscoveryHandlerId(final String discoveryHandlerId) {
+        this.discoveryHandlerId = discoveryHandlerId;
+    }
 
-        return new ProxySelectorVO(proxySelectorDO.getId(), proxySelectorDO.getName(), proxySelectorDO.getPluginName(),
-                proxySelectorDO.getForwardPort(), proxySelectorDO.getType(), proxySelectorDO.getProps(),
-                DateUtils.localDateTimeToString(proxySelectorDO.getDateCreated().toLocalDateTime()),
-                DateUtils.localDateTimeToString(proxySelectorDO.getDateUpdated().toLocalDateTime()));
+    /**
+     * set handler.
+     * @param handler handler
+     */
+    public void setHandler(final String handler) {
+        this.handler = handler;
+    }
+
+    /**
+     * set createTime.
+     * @param createTime createTime
+     */
+    public void setCreateTime(final Timestamp createTime) {
+        this.createTime = createTime;
+    }
+
+    /**
+     * get createTime.
+     * @return createTime
+     */
+    public Timestamp getCreateTime() {
+        return createTime;
+    }
+
+    /**
+     * set updateTime.
+     * @param updateTime updateTime
+     */
+    public void setUpdateTime(final Timestamp updateTime) {
+        this.updateTime = updateTime;
+    }
+
+    /**
+     * get updateTime.
+     * @return updateTime
+     */
+    public Timestamp getUpdateTime() {
+        return updateTime;
+    }
+
+    /**
+     * get props.
+     *
+     * @return props
+     */
+    public String getProps() {
+        return props;
+    }
+
+    /**
+     * set props.
+     *
+     * @param props props
+     */
+    public void setProps(final String props) {
+        this.props = props;
+    }
+
+    /**
+     * get discovery.
+     * @return discovery
+     */
+    public DiscoveryDTO getDiscovery() {
+        return discovery;
+    }
+
+    /**
+     * set discovery.
+     * @param discovery discovery
+     */
+    public void setDiscovery(final DiscoveryDTO discovery) {
+        this.discovery = discovery;
+    }
+
+    /**
+     * get discovery upstream list.
+     * @return upstream list
+     */
+    public List<DiscoveryUpstreamDTO> getDiscoveryUpstreams() {
+        return discoveryUpstreams;
+    }
+
+    /**
+     * set discovery upstream list.
+     * @param discoveryUpstreams discovery upstream list
+     */
+    public void setDiscoveryUpstreams(final List<DiscoveryUpstreamDTO> discoveryUpstreams) {
+        this.discoveryUpstreams = discoveryUpstreams;
     }
 }

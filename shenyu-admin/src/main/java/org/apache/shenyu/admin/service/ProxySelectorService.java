@@ -17,10 +17,11 @@
 
 package org.apache.shenyu.admin.service;
 
-import org.apache.shenyu.admin.model.dto.ProxySelectorDTO;
+import org.apache.shenyu.admin.model.dto.ProxySelectorAddDTO;
 import org.apache.shenyu.admin.model.page.CommonPager;
 import org.apache.shenyu.admin.model.query.ProxySelectorQuery;
 import org.apache.shenyu.admin.model.vo.ProxySelectorVO;
+import org.apache.shenyu.common.dto.ProxySelectorData;
 
 import java.util.List;
 
@@ -37,10 +38,10 @@ public interface ProxySelectorService {
     /**
      * createOrUpdate.
      *
-     * @param proxySelectorDTO proxySelectorDTO
+     * @param proxySelectorAddDTO proxySelectorAddDTO
      * @return the string
      */
-    String createOrUpdate(ProxySelectorDTO proxySelectorDTO);
+    String createOrUpdate(ProxySelectorAddDTO proxySelectorAddDTO);
 
     /**
      * delete.
@@ -49,4 +50,28 @@ public interface ProxySelectorService {
      * @return the string
      */
     String delete(List<String> ids);
+
+    /**
+     * addProxySelector.
+     *
+     * @param proxySelectorAddDTO {@link ProxySelectorAddDTO}
+     * @return the result
+     */
+    String create(ProxySelectorAddDTO proxySelectorAddDTO);
+
+
+    /**
+     * fetchData.
+     *
+     * @param discoveryHandlerId discoveryHandlerId
+     */
+    void fetchData(String discoveryHandlerId);
+
+    /**
+     * listAll.
+     *
+     * @return ProxySelectorDTOList
+     */
+    List<ProxySelectorData> listAll();
+
 }
