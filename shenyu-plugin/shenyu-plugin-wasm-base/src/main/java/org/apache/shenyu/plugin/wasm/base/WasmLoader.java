@@ -24,12 +24,17 @@ public class WasmLoader {
     public WasmLoader() throws IOException, URISyntaxException {
         final Class<? extends WasmLoader> clazz = this.getClass();
         this.wasmName = clazz.getName() + ".wasm";
+        this.instance = load(wasmName);
+    }
+    
+    public static Instance load(String wasmName) throws IOException, URISyntaxException {
         // locate `.wasm` lib.
-        Path wasmPath = Paths.get(clazz.getClassLoader().getResource(this.wasmName).toURI());
+        Path wasmPath = Paths.get(WasmLoader.class.getClassLoader().getResource(wasmName).toURI());
         // Reads the WebAssembly module as bytes.
         byte[] wasmBytes = Files.readAllBytes(wasmPath);
         // Instantiates the WebAssembly module.
-        this.instance = new Instance(wasmBytes);
-        Runtime.getRuntime().addShutdownHook(new Thread(this.instance::close));
+        Instance instance = new Instance(wasmBytes);
+        Runtime.getRuntime().addShutdownHook(new Thread(instance::close));
+        return instance;
     }
 }
