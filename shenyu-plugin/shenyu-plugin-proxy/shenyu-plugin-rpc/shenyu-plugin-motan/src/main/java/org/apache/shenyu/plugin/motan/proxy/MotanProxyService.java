@@ -18,9 +18,11 @@
 package org.apache.shenyu.plugin.motan.proxy;
 
 import com.weibo.api.motan.config.RefererConfig;
-import com.weibo.api.motan.proxy.CommonHandler;
+import com.weibo.api.motan.proxy.CommonClient;
+import com.weibo.api.motan.rpc.Request;
 import com.weibo.api.motan.rpc.ResponseFuture;
 import com.weibo.api.motan.rpc.RpcContext;
+import com.weibo.api.motan.util.MotanClientUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shenyu.common.concurrent.ShenyuThreadFactory;
 import org.apache.shenyu.common.concurrent.ShenyuThreadPoolExecutor;
@@ -78,12 +80,12 @@ public class MotanProxyService {
         Optional.ofNullable(rpcContext).map(context -> context.get(PluginEnum.MOTAN.getName())).ifPresent(context -> {
             context.forEach((k, v) -> RpcContext.getContext().setRpcAttachment(k, v));
         });
-        RefererConfig<CommonHandler> reference = ApplicationConfigCache.getInstance().get(metaData.getPath());
+        RefererConfig<CommonClient> reference = ApplicationConfigCache.getInstance().get(metaData.getPath());
         if (Objects.isNull(reference) || StringUtils.isEmpty(reference.getServiceInterface())) {
             ApplicationConfigCache.getInstance().invalidate(metaData.getPath());
             reference = ApplicationConfigCache.getInstance().initRef(metaData);
         }
-        CommonHandler commonHandler = reference.getRef();
+        CommonClient commonClient = reference.getRef();
         ApplicationConfigCache.MotanParamInfo motanParamInfo = ApplicationConfigCache.PARAM_MAP.get(metaData.getMethodName());
         Object[] params;
         if (Objects.isNull(motanParamInfo)) {
@@ -94,13 +96,17 @@ public class MotanProxyService {
             Map<String, Object> bodyMap = GsonUtils.getInstance().convertToMap(body);
             ParamCheckUtils.checkParamsLength(bodyMap.size(), motanParamInfo.getParamNames().length);
             for (int i = 0; i < num; i++) {
-                params[i] = bodyMap.get(motanParamInfo.getParamNames()[i]).toString();
+                //Fix the bug by dylan,Use primitive type。Otherwise, the generalization call will fail
+                params[i] = bodyMap.get(motanParamInfo.getParamNames()[i]);
             }
         }
         ResponseFuture responseFuture;
         //CHECKSTYLE:OFF IllegalCatch
         try {
-            responseFuture = (ResponseFuture) commonHandler.asyncCall(metaData.getMethodName(), params, Object.class);
+            Request request = MotanClientUtil.buildRequest(reference.getServiceInterface(), metaData.getMethodName(), metaData.getParameterTypes(), params, null);
+            responseFuture = (ResponseFuture)commonClient.asyncCall(request, Object.class);
+            //responseFuture = (ResponseFuture) commonClient.asyncCall(metaData.getMethodName(), params, Object.class);
+
         } catch (Throwable e) {
             LOG.error("Exception caught in MotanProxyService#genericInvoker.", e);
             return null;

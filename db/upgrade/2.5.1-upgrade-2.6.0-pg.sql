@@ -201,7 +201,7 @@ INSERT INTO "public"."plugin_handle"
 VALUES('1678293231840038912', '42', 'discoveryZookeeper', 'discovery zk init props', 2, 3, 0, '{"required":"0","defaultValue":"{\"baseSleepTimeMilliseconds\":\"1000\",\"maxRetries\":\"3\",\"maxSleepTimeMilliseconds\":\"1000\",\"connectionTimeoutMilliseconds\":\"1000\",\"sessionTimeoutMilliseconds\":\"1000\",\"namespace\":\"\",\"digest\":null}","rule":""}', '2023-07-10 14:41:02.000', '2023-07-10 14:41:40.643');
 INSERT INTO "public"."plugin_handle"
 (id, plugin_id, field, "label", data_type, "type", sort, ext_obj, date_created, date_updated)
-VALUES('1678293333363167232', '42', 'discoveryhandler', 'discoveryhandler', 2, 1, 0, '{"required":"0","defaultValue":"url,protocol,status,weight","rule":""}', '2023-07-10 14:41:27.000', '2023-07-12 13:16:55.067');
+VALUES('1678293333363167232', '42', 'discoveryHandler', 'discoveryHandler', 2, 1, 0, '{"required":"0","defaultValue":"url,protocol,status,weight","rule":""}', '2023-07-10 14:41:27.000', '2023-07-12 13:16:55.067');
 INSERT INTO "public"."plugin_handle"
 (id, plugin_id, field, "label", data_type, "type", sort, ext_obj, date_created, date_updated)
 VALUES('1678997037438107648', '42', 'bossGroupThreadCount', 'bossGroupThreadCount', 2, 1, 1, '{"required":"0","defaultValue":"1","rule":""}', '2023-07-12 13:17:43.000', '2023-07-12 13:22:24.662');
@@ -226,6 +226,16 @@ VALUES('1678997277012557824', '42', 'clientMaxConnections', 'clientMaxConnection
 INSERT INTO "public"."plugin_handle"
 (id, plugin_id, field, "label", data_type, "type", sort, ext_obj, date_created, date_updated)
 VALUES('1678997557628272640', '42', 'clientPendingAcquireTimeout', 'clientPendingAcquireTimeout', 2, 1, 5, '{"required":"0","defaultValue":"5","rule":""}', '2023-07-12 13:19:47.000', '2023-07-12 13:23:33.253');
+
+UPDATE "public"."plugin" set config = '{"registerProtocol":"zk",registerAddress":"127.0.0.1:2181","corethreads":0,"threads":2147483647,"queues":0,"threadpool":"shared"}' WHERE id = '17';
+UPDATE "public"."plugin_handle" set field = 'registerProtocol', label = 'registerProtocol', ext_obj = '{"required":"0","defaultValue":"direct","placeholder":"registerProtocol","rule":""}' where id = '1529403902783524879';
+UPDATE "public"."plugin_handle" set sort = 2 where id = '1529403902783524880';
+UPDATE "public"."plugin_handle" set sort = 3 where id = '1529403902783524881';
+UPDATE "public"."plugin_handle" set sort = 4 where id = '1529403902783524882';
+UPDATE "public"."plugin_handle" set sort = 5 where id = '1529403902783524883';
+
+INSERT INTO "public"."plugin_handle" VALUES ('1678997557628272641', '17', 'registerAddress', 'registerAddress', 2, 3, 1, '{"required":"0","defaultValue":"127.0.0.1:2181","placeholder":"registerAddress","rule":""}', '2022-05-25 18:08:01', '2022-05-25 18:08:01');
+
 
 -- resort rewrite plugin
 UPDATE "public"."sort" SET sort = -2 WHERE plugin_id = '3';

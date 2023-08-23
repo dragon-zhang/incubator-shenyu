@@ -38,9 +38,12 @@ import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.shaded.org.yaml.snakeyaml.DumperOptions;
 import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -248,10 +251,7 @@ public class DockerServiceCompose implements ServiceCompose {
 
         Map<String, Object> currentMap = yamlData;
         for (int i = 0; i < subModulePath.length - 1; i++) {
-            if (!currentMap.containsKey(subModulePath[i])) {
-                currentMap.put(subModulePath[i], new LinkedHashMap<>());
-            }
-            currentMap = (Map<String, Object>) currentMap.get(subModulePath[i]);
+            currentMap = (Map<String, Object>) currentMap.computeIfAbsent(subModulePath[i], unused -> new LinkedHashMap<>());
         }
 
         currentMap.put(subModulePath[subModulePath.length - 1], newValue);
@@ -299,6 +299,17 @@ public class DockerServiceCompose implements ServiceCompose {
                 () -> new FileOutputStream(file)
             );
             yaml.dump(yamlData, new OutputStreamWriter(outputStream));
+            try {
+                // Read the file content and print it to the log.
+                BufferedReader reader = new BufferedReader(new FileReader(file));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    log.info(line);
+                }
+                reader.close();
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+            }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }

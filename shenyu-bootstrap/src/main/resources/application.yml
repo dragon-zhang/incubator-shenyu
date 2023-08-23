@@ -18,7 +18,7 @@ server:
   address: 0.0.0.0
   compression:
     enabled: true
-    minResponseSize: 1048576 # If the response data is greater than 1M, enable compression.
+    minResponseSize: 1MB # If the response data is greater than 1MB, enable compression.
 
 spring:
   main:
@@ -262,8 +262,8 @@ shenyu:
 #      url: http://localhost:2379
 #    consul:
 #      url: http://localhost:8500
-#      waitTime: 1000
-#      watchDelay: 1000
+#      waitTime: 10000
+#      watchDelay: 10000
   exclude:
     enabled: false
     paths:
